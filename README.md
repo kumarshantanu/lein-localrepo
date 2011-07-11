@@ -29,7 +29,7 @@ Output:
 
 ### Install artifacts to local Maven repository
 
-    $ lein localrepo install <filename> [<[groupId/]artifactId> [<version>]]
+    $ lein localrepo install <filename> <[groupId/]artifactId> <version>
 
 Examples:
 
@@ -37,7 +37,7 @@ Examples:
     $ lein localrepo install foomatic-1.3.9.jar foomatic 1.3.9
 
 
-### List artifacts in local Maven repository (NOT YET IMPLEMENTED):
+### List artifacts in local Maven repository (Not Yet Implemented):
 
     $ lein localrepo list [<[groupId/]artifactId> [<version>]]
 
@@ -49,7 +49,7 @@ Examples:
     $ lein localrepo list com.example/foo 1.3 # lists only specified version
 
 
-### Remove artifacts from local Maven repository (NOT YET IMPLEMENTED):
+### Remove artifacts from local Maven repository (Not Yet Implemented):
 
     $ lein localrepo remove <[groupId/]artifactId> [<version>]
 
