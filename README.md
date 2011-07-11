@@ -16,31 +16,33 @@ Or, include as a dev-dependency:
 
 ### Guess Leiningen (Maven) coordinates of a file
 
-Syntax:
     $ lein localrepo coords <filename>
 
 Example:
+
     $ lein localrepo coords foo-bar-1.0.6.jar
+
 Output:
+
     foo-bar-1.0.6.jar foo-bar/foo-bar 1.0.6
 
 
 ### Install artifacts to local Maven repository
 
-Syntax:
     $ lein localrepo install <filename> [<[groupId/]artifactId> [<version>]]
 
 Examples:
+
     $ lein localrepo install foo-1.0.6.jar com.example/foo 1.0.6
     $ lein localrepo install foomatic-1.3.9.jar foomatic 1.3.9
 
 
 ### List artifacts in local Maven repository (NOT YET IMPLEMENTED):
 
-Syntax:
     $ lein localrepo list [<[groupId/]artifactId> [<version>]]
 
 Examples:
+
     $ lein localrepo list                     # lists all artifacts, all versions
     $ lein localrepo list com.example/foo     # lists all versions
     $ lein localrepo list foomatic            # lists all versions
@@ -49,10 +51,10 @@ Examples:
 
 ### Remove artifacts from local Maven repository (NOT YET IMPLEMENTED):
 
-Syntax:
     $ lein localrepo remove <[groupId/]artifactId> [<version>]
 
 Examples:
+
     $ lein localrepo remove com.example/foo        # removes all versions
     $ lein localrepo remove foomatic               # removes all versions
     $ lein localrepo remove com.example/foo 1.0.3  # removes only specified version
