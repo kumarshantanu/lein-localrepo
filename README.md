@@ -7,11 +7,11 @@ Leiningen plugin to work with local Maven repository.
 
 Either install as a plugin:
 
-    $ lein plugin install lein-localrepo "0.1"
+    $ lein plugin install lein-localrepo "0.1.1"
 
 Or, include as a dev-dependency:
 
-    :dev-dependencies [lein-localrepo "0.1"]
+    :dev-dependencies [lein-localrepo "0.1.1"]
 
 
 ### Guess Leiningen (Maven) coordinates of a file

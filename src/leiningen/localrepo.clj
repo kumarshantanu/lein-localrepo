@@ -141,9 +141,9 @@ help     This help screen
 
 (defn localrepo
   "Work with local Maven repository"
-  ([project]
+  ([]
     (c-help))
-  ([project command & args]
+  ([command & args]
     (let [argc (count args)]
       (case command
         "coords"  (apply-cmd #(=  argc 1)     command c-coords  args)
