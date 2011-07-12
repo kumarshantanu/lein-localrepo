@@ -35,6 +35,7 @@ Examples:
 
     $ lein localrepo install foo-1.0.6.jar com.example/foo 1.0.6
     $ lein localrepo install foomatic-1.3.9.jar foomatic 1.3.9
+    $ lein localrepo coords /tmp/foobar-1.0.0-SNAPSHOT.jar | xargs lein localrepo install
 
 
 ### List artifacts in local Maven repository (Not Yet Implemented):

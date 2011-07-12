@@ -72,7 +72,7 @@
                  (re-find (re-matcher #"(.+)\-(\d.+)\.(\w+)"
                                       filename)))
         [_ artifact-id version] tokens]
-    (println filename (str artifact-id "/" artifact-id) version)))
+    (println filepath (str artifact-id "/" artifact-id) version)))
 
 
 (defn c-install
