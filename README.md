@@ -7,11 +7,11 @@ Leiningen plugin to work with local Maven repository.
 
 Either install as a plugin:
 
-    $ lein plugin install lein-localrepo "0.1.1"
+    $ lein plugin install lein-localrepo "0.2"
 
 Or, include as a dev-dependency:
 
-    :dev-dependencies [lein-localrepo "0.1.1"]
+    :dev-dependencies [lein-localrepo "0.2"]
 
 
 ### Guess Leiningen (Maven) coordinates of a file
@@ -38,16 +38,15 @@ Examples:
     $ lein localrepo coords /tmp/foobar-1.0.0-SNAPSHOT.jar | xargs lein localrepo install
 
 
-### List artifacts in local Maven repository (Not Yet Implemented):
+### List artifacts in local Maven repository ('-d' Not Yet Implemented):
 
-    $ lein localrepo list [<[groupId/]artifactId> [<version>]]
+    $ lein localrepo list [-f | -d]
 
 Examples:
 
-    $ lein localrepo list                     # lists all artifacts, all versions
-    $ lein localrepo list com.example/foo     # lists all versions
-    $ lein localrepo list foomatic            # lists all versions
-    $ lein localrepo list com.example/foo 1.3 # lists only specified version
+    $ lein localrepo list       # lists all artifacts, all versions
+    $ lein localrepo list -f    # lists all artifacts and filenames
+    $ lein localrepo list -d    # lists all artifacts in detail
 
 
 ### Remove artifacts from local Maven repository (Not Yet Implemented):
