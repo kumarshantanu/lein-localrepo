@@ -6,6 +6,7 @@
     [clojure.java.io      :as jio]
     [clojure.string       :as str]
     [clojure.pprint       :as ppr]
+    [clojure.xml          :as xml]
     [leiningen.localrepo.internal :as in])
   (:import
     (java.io File)
@@ -66,6 +67,17 @@
     (.install installer the-file artifact local-repo)))
 
 
+(defn read-artifact-description
+  [pom-file]
+  (if (.isFile pom-file)
+    (let [raw-content (slurp pom-file)
+          xml-content (xml/parse pom-file)
+          map-content (in/xml-map xml-content)]
+      ;(with-out-str (ppr/pprint xml-content) (ppr/pprint map-content))
+      (first (:description (:project map-content))))
+    "(No description available)"))
+
+
 (defn read-artifact-entries
   "Read artifact entries from specified `dir` and return as a list. If
   dir contains only sub-dirs then it recurses to find actual entries."
@@ -101,7 +113,12 @@
             [group-id
              artifact-id
              version
-             (.getName each)]))))))
+             (.getName each)
+             (read-artifact-description
+              (jio/file (let [[dir fne] (in/split-filepath
+                                         (.getAbsolutePath each))
+                              [fnm ext] (in/split-filename fne)]
+                          (str dir "/" fnm ".pom"))))]))))))
 
 
 (defn c-list
@@ -109,42 +126,57 @@
   [& args]
   (if (and (not (zero? (count args)))
            (or (> (count args) 1)
-               (not (contains? #{"-f"} (first args)))))
+               (not (contains? #{"-f" "-g"} (first args)))))
     (println "Invalid argument(s):" (apply str (interpose " " args))
              " ==>  Allowed: [-f]")
     (let [artifact-entries (read-artifact-entries
                             (jio/file mvn/local-repo-path))
           by-group-id (group-by first artifact-entries)]
       (doseq [group-id (keys by-group-id)]
-        ;; print group-id header
-        (println (format "[%s]" group-id))
-        (let [by-artifact-id (group-by second
-                                       (get by-group-id group-id))]
-          (doseq [artifact-id (keys by-artifact-id)]
-            (let [versions (distinct
-                            (map #(nth % 2)
-                                 (get by-artifact-id artifact-id)))]
-              (case (or (first args) :nil)
-                    :nil (println
-                          (format "  %s (%s)" artifact-id
-                                  (apply str (interpose ", "
-                                                        versions))))
-                    "-f" (do (println (format "  %s" artifact-id))
-                             (doseq [each-v versions]
-                               (println (format "    [%s]" each-v))
-                               (let [artifacts (get by-artifact-id
-                                                    artifact-id)]
-                                 (doseq [each-a (filter #(= each-v
-                                                            (nth % 2))
-                                                        artifacts)]
-                                   (println
-                                    (format "      %s"
-                                            (last each-a)))))))
-                    "-d" (println
-                          "Detail option is not yet implemented")
-                    (println
-                     (str "Bad arg(s): "
-                          (apply str (interpose " " args))))))))))))
+        (if (nil? (first args))
+          ;; default - print it like lein-search
+          (let [group-artifacts (get by-group-id group-id)
+                with-pomfile (map #(let [fnm (last %)
+                                         ] into [] (drop-last %))
+                                      group-artifacts)]
+            (doseq [artifact group-artifacts]
+              (let [[gid aid ver fnm des] artifact
+                    artifact-descript des]
+                (println (format "[%s/%s \"%s\"] %s"
+                                 gid aid ver artifact-descript)))))
+          ;; custom format
+          (do
+            (println (format "[%s]" group-id))
+            (let [by-artifact-id (group-by second
+                                           (get by-group-id group-id))]
+              (doseq [artifact-id (keys by-artifact-id)]
+                (let [artifacts (get by-artifact-id artifact-id)
+                      description (last (first artifacts))
+                      versions (distinct (map #(nth % 2) artifacts))]
+                  (case (or (first args) :nil)
+                        "-g" (println
+                              (format "  %s/%s (%s) - %s"
+                                      group-id artifact-id
+                                      (apply str (interpose ", "
+                                                            versions))
+                                      (or description "")))
+                        "-f" (do (println (format "  %s" artifact-id))
+                                 (doseq [each-v versions]
+                                   (println (format "    [%s]" each-v))
+                                   (let [artifacts (get by-artifact-id
+                                                        artifact-id)]
+                                     (doseq [each-a (filter #(= each-v
+                                                                (nth % 2))
+                                                            artifacts)]
+                                       (println
+                                        (format "      %s/%s - %s"
+                                                group-id artifact-id
+                                                (last (butlast each-a))))))))
+                        "-d" (println
+                              "Detail option is not yet implemented")
+                        (println
+                         (str "Bad arg(s): "
+                              (apply str (interpose " " args))))))))))))))
 
 
 (defn c-remove
