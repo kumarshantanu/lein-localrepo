@@ -166,7 +166,7 @@
                                                 s))))))]
     (cond
      invalid-flag? (println "Invalid argument(s):" (str/join " " args)
-                            " ==>  Allowed: [-s|-f|-d]")
+                            " ==>  Allowed: [-s | -f | -d]")
      (= :nil flag) (each-artifact
                     (fn [art-name artifacts]
                       (println
