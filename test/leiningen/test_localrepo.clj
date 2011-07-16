@@ -18,7 +18,7 @@
   <elem1>
     <child>Child</child>
   </elem1>
-</project>" {:project {:elem1 {:child ["Child"]}}}]
+</project>" {:project {:elem1 [{:child ["Child"]}]}}]
    ["<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <project>
   <elem1>
@@ -26,9 +26,9 @@
     <child1>Child 1 - instance 2</child1>
     <child2>Child 2</child2>
   </elem1>
-</project>" {:project {:elem1 {:child1 ["Child 1 - instance 1"
-                                          "Child 1 - instance 2"]
-                                 :child2 ["Child 2"]}}}]])
+</project>" {:project {:elem1 [{:child1 ["Child 1 - instance 1"
+                                         "Child 1 - instance 2"]
+                                :child2 ["Child 2"]}]}}]])
 
 
 (deftest test-xml-parsing

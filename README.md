@@ -40,13 +40,14 @@ Examples:
 
 ### List artifacts in local Maven repository ('-d' Not Yet Implemented):
 
-    $ lein localrepo list [-f | -d]
+    $ lein localrepo list [-s | -f | -d]
 
 Examples:
 
     $ lein localrepo list       # lists all artifacts, all versions
+    $ lein localrepo list -s    # lists all artifacts with description
     $ lein localrepo list -f    # lists all artifacts and filenames
-    $ lein localrepo list -d    # lists all artifacts in detail
+    $ lein localrepo list -d    # lists all artifacts with detail
 
 
 ### Remove artifacts from local Maven repository (Not Yet Implemented):

@@ -9,6 +9,8 @@
     [clojure.xml          :as xml]
     [leiningen.localrepo.internal :as in])
   (:import
+    (java.util Date)
+    (java.text DateFormat)
     (java.io File)
     (java.util.jar JarFile)
     (org.apache.maven.artifact.installer ArtifactInstaller)))
@@ -78,6 +80,18 @@
     "(No description available)"))
 
 
+(defn read-artifact-details
+  "Given a POM file, read project details"
+  [pom-file]
+  (if (.isFile pom-file)
+    (let [raw-content (slurp pom-file)
+          xml-content (xml/parse pom-file)
+          map-content (in/xml-map xml-content)]
+      (with-out-str ;(ppr/pprint xml-content)
+        (ppr/pprint map-content)))
+    "(No details available)"))
+
+
 (defn read-artifact-entries
   "Read artifact entries from specified `dir` and return as a list. If
   dir contains only sub-dirs then it recurses to find actual entries."
@@ -113,70 +127,87 @@
             [group-id
              artifact-id
              version
-             (.getName each)
-             (read-artifact-description
-              (jio/file (let [[dir fne] (in/split-filepath
-                                         (.getAbsolutePath each))
-                              [fnm ext] (in/split-filename fne)]
-                          (str dir "/" fnm ".pom"))))]))))))
+             (jio/file each)
+             (jio/file (let [[dir fne] (in/split-filepath
+                                        (.getAbsolutePath each))
+                             [fnm ext] (in/split-filename fne)]
+                         (str dir "/" fnm ".pom")))]))))))
 
 
 (defn c-list
   "List artifacts in local Maven repo"
   [& args]
-  (if (and (not (zero? (count args)))
-           (or (> (count args) 1)
-               (not (contains? #{"-f" "-g"} (first args)))))
-    (println "Invalid argument(s):" (apply str (interpose " " args))
-             " ==>  Allowed: [-f]")
-    (let [artifact-entries (read-artifact-entries
-                            (jio/file mvn/local-repo-path))
-          by-group-id (group-by first artifact-entries)]
-      (doseq [group-id (keys by-group-id)]
-        (if (nil? (first args))
-          ;; default - print it like lein-search
-          (let [group-artifacts (get by-group-id group-id)
-                with-pomfile (map #(let [fnm (last %)
-                                         ] into [] (drop-last %))
-                                      group-artifacts)]
-            (doseq [artifact group-artifacts]
-              (let [[gid aid ver fnm des] artifact
-                    artifact-descript des]
-                (println (format "[%s/%s \"%s\"] %s"
-                                 gid aid ver artifact-descript)))))
-          ;; custom format
-          (do
-            (println (format "[%s]" group-id))
-            (let [by-artifact-id (group-by second
-                                           (get by-group-id group-id))]
-              (doseq [artifact-id (keys by-artifact-id)]
-                (let [artifacts (get by-artifact-id artifact-id)
-                      description (last (first artifacts))
-                      versions (distinct (map #(nth % 2) artifacts))]
-                  (case (or (first args) :nil)
-                        "-g" (println
-                              (format "  %s/%s (%s) - %s"
-                                      group-id artifact-id
-                                      (apply str (interpose ", "
-                                                            versions))
-                                      (or description "")))
-                        "-f" (do (println (format "  %s" artifact-id))
-                                 (doseq [each-v versions]
-                                   (println (format "    [%s]" each-v))
-                                   (let [artifacts (get by-artifact-id
-                                                        artifact-id)]
-                                     (doseq [each-a (filter #(= each-v
-                                                                (nth % 2))
-                                                            artifacts)]
-                                       (println
-                                        (format "      %s/%s - %s"
-                                                group-id artifact-id
-                                                (last (butlast each-a))))))))
-                        "-d" (println
-                              "Detail option is not yet implemented")
-                        (println
-                         (str "Bad arg(s): "
-                              (apply str (interpose " " args))))))))))))))
+  (let [artifact-entries (sort (read-artifact-entries
+                                (jio/file mvn/local-repo-path)))
+        artifact-str  (fn artstr
+                        ([gi ai] (if (= gi ai) ai (str gi "/" ai)))
+                        ([[gi ai & more]] (artstr gi ai)))
+        flag          (or (first args) :nil)
+        invalid-flag? (not (contains? #{:nil "-s" "-f" "-d"} flag))
+        each-artifact (fn [f] ; args to f: 1. art-name, 2. artifacts
+                        (let [by-art-id (group-by artifact-str
+                                                  artifact-entries)]
+                          (doseq [art-str (keys by-art-id)]
+                            (f art-str (get by-art-id art-str)))))
+        df            (DateFormat/getDateTimeInstance)
+        date-format   #(.format df %)
+        ljustify      (fn [s n]
+                        (let [s (str/trim (str s))]
+                          (if (> (count s) n) s
+                              (apply str
+                                     (take n (concat
+                                              s (repeat n \space)))))))
+        rjustify      (fn [s n]
+                        (let [s (str/trim (str s))]
+                          (if (> (count s) n) s
+                              (apply str
+                                     (take-last
+                                      n (concat (repeat n \space)
+                                                s))))))]
+    (cond
+     invalid-flag? (println "Invalid argument(s):" (str/join " " args)
+                            " ==>  Allowed: [-s|-f|-d]")
+     (= :nil flag) (each-artifact
+                    (fn [art-name artifacts]
+                      (println
+                       (format "%s (%s)" art-name
+                               (str/join ", "
+                                         (for [[g a v f p] artifacts]
+                                           v))))))
+     (= "-s" flag) (each-artifact
+                    (fn [art-name artifacts]
+                      (println
+                       (format "%s (%s) -- %s" (ljustify art-name 20)
+                               (str/join ", "
+                                         (for [[g a v f p] artifacts]
+                                           v))
+                               (or (some #(read-artifact-description
+                                           (last %)) artifacts)
+                                   "")))))
+     (= "-f" flag) (each-artifact
+                    (fn [art-name artifacts]
+                      (doseq [each artifacts]
+                        (let [[g a v ^File f] each
+                              an (ljustify (format "[%s \"%s\"]"
+                                                   art-name v) 30)
+                              nm (ljustify (.getName f) 30)
+                              sp (ljustify (format "%s %s" an nm) 62)
+                              ln (rjustify (.length f)
+                                           (min (- 70 (count sp)) 10))]
+                          (println
+                           (format "%s %s %s" sp ln
+                                   (date-format
+                                    (Date. (.lastModified f)))))))))
+     (= "-d" flag) (each-artifact
+                    (fn [art-name artifacts]
+                      (println
+                       (format "%s (%s)\n%s" (ljustify art-name 20)
+                               (str/join ", "
+                                         (for [[g a v f p] artifacts]
+                                           v))
+                               (or (some #(read-artifact-details
+                                           (last %)) artifacts)
+                                   ""))))))))
 
 
 (defn c-remove
