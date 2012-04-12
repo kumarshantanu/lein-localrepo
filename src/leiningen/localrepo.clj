@@ -1,8 +1,6 @@
 (ns leiningen.localrepo
   (:require
-    [leiningen.util.maven :as mvn]
-    [leiningen.install    :as ins]
-    [leiningen.pom        :as pom]
+    [cemerick.pomegranate.aether :as aether]
     [clojure.java.io      :as jio]
     [clojure.string       :as str]
     [clojure.pprint       :as ppr]
@@ -12,8 +10,11 @@
     (java.util Date)
     (java.text DateFormat)
     (java.io File)
-    (java.util.jar JarFile)
-    (org.apache.maven.artifact.installer ArtifactInstaller)))
+    (java.util.jar JarFile)))
+
+
+(def local-repo-path (str/join File/separator [(System/getProperty "user.home")
+                                               ".m2" "repository"]))
 
 
 (defn split-artifactid
@@ -32,6 +33,15 @@
           [gi ai]))))
 
 
+(def doc-coords
+  "Guess Leiningen coordinates of given filename.
+  Arguments:
+    <filepath>
+  Example:                                                                      
+    Input  -  local/jars/foo-bar-1.0.6.jar                                        
+    Output - foo-bar-1.0.6.jar foo-bar 1.0.6")
+
+
 (defn c-coords
   "Guess Leiningen coordinates of given filename.
   Example:
@@ -46,27 +56,19 @@
     (println filepath (str artifact-id "/" artifact-id) version)))
 
 
+(def doc-install
+  "Install artifact to local repository
+  Arguments:
+    <filename> <artifact-id> <version>
+  Example:
+    foo-1.0.jar bar/foo 1.0")
+
+
 (defn c-install
-  "Install artifact to local repository"
   [filename artifact-id version]
-  (let [the-file   (jio/file filename)
-        [gid aid]  (split-artifactid artifact-id)
-        project    {:name  aid
-                    :group gid
-                    :version version
-                    :root    "."
-                    :source-path ""
-                    :test-path   ""
-                    :resources-path     ""
-                    :dev-resources-path ""}
-        model      (mvn/make-model project)
-        artifact   (mvn/make-artifact model)
-        installer  (.lookup mvn/container ArtifactInstaller/ROLE)
-        local-repo (mvn/make-local-repo)]
-    ;(when (not= "pom" (.getPackaging model))
-    ;      (mvn/add-metadata artifact (jio/file (pom/pom project))))
-    (ins/install-shell-wrappers (JarFile. the-file))
-    (.install installer the-file artifact local-repo)))
+  (aether/install :coordinates [(symbol artifact-id) version]
+                  :jar-file (jio/file filename))
+  0)
 
 
 (defn read-artifact-description
@@ -75,7 +77,6 @@
     (let [raw-content (slurp pom-file)
           xml-content (xml/parse pom-file)
           map-content (in/xml-map xml-content)]
-      ;(with-out-str (ppr/pprint xml-content) (ppr/pprint map-content))
       (first (:description (:project map-content))))
     "(No description available)"))
 
@@ -87,7 +88,7 @@
     (let [raw-content (slurp pom-file)
           xml-content (xml/parse pom-file)
           map-content (in/xml-map xml-content)]
-      (with-out-str ;(ppr/pprint xml-content)
+      (with-out-str
         (ppr/pprint map-content)))
     "(No details available)"))
 
@@ -114,7 +115,7 @@
                 version (.getName parent)
                 artifact-id (.getName (.getParentFile parent))
                 group-path  (in/java-filepath
-                             (in/relative-path mvn/local-repo-path
+                             (in/relative-path local-repo-path
                                                (-> parent
                                                    .getParentFile
                                                    .getParentFile
@@ -134,11 +135,21 @@
                          (str dir "/" fnm ".pom")))]))))))
 
 
+(def doc-list
+  "List artifacts in local Maven repo
+  Arguments:
+    [-d | -f | -s]
+  No arguments lists with concise information
+  -d lists in detail
+  -f lists with filenames of artifacts
+  -s lists with project description")
+
+
 (defn c-list
   "List artifacts in local Maven repo"
   [& args]
   (let [artifact-entries (sort (read-artifact-entries
-                                (jio/file mvn/local-repo-path)))
+                                (jio/file local-repo-path)))
         artifact-str  (fn artstr
                         ([gi ai] (if (= gi ai) ai (str gi "/" ai)))
                         ([[gi ai & more]] (artstr gi ai)))
@@ -172,15 +183,15 @@
                       (println
                        (format "%s (%s)" art-name
                                (str/join ", "
-                                         (for [[g a v f p] artifacts]
-                                           v))))))
+                                         (distinct (for [[g a v f p] artifacts]
+                                                     v)))))))
      (= "-s" flag) (each-artifact
                     (fn [art-name artifacts]
                       (println
                        (format "%s (%s) -- %s" (ljustify art-name 20)
                                (str/join ", "
-                                         (for [[g a v f p] artifacts]
-                                           v))
+                                         (distinct (for [[g a v f p] artifacts]
+                                                     v)))
                                (or (some #(read-artifact-description
                                            (last %)) artifacts)
                                    "")))))
@@ -203,17 +214,26 @@
                       (println
                        (format "%s (%s)\n%s" (ljustify art-name 20)
                                (str/join ", "
-                                         (for [[g a v f p] artifacts]
-                                           v))
+                                         (distinct (for [[g a v f p] artifacts]
+                                                     v)))
                                (or (some #(read-artifact-details
                                            (last %)) artifacts)
                                    ""))))))))
 
 
+(def doc-remove
+  "Remove artifacts from local Maven repo")
 (defn c-remove
   "Remove artifacts from local Maven repo"
   [& args]
   (println "Not yet implemented"))
+
+
+(def doc-help
+  "Display help for plugin, or for specified command
+  Arguments:
+    [<command>] the command to show help for
+  No argument lists generic help page")
 
 
 (defn c-help
@@ -234,11 +254,11 @@ $ lein localrepo help install
 "))
   ([command]
     (case command
-      "coords"  (doc c-coords)
-      "install" (doc c-install)
-      "list"    (doc c-list)
-      "remove"  (doc c-remove)
-      "help"    (doc c-help)
+      "coords"  (println doc-coords)
+      "install" (println doc-install)
+      "list"    (println doc-list)
+      "remove"  (println doc-remove)
+      "help"    (println doc-help)
       (in/illegal-arg "Illegal command:" command
         ", Allowed: coords, install, list, remove, help"))))
 
@@ -249,11 +269,11 @@ $ lein localrepo help install
              (c-help cmd)))
 
 
-(defn localrepo
+(defn ^:no-project-needed localrepo
   "Work with local Maven repository"
-  ([]
+  ([_]
     (c-help))
-  ([command & args]
+  ([_ command & args]
     (let [argc (count args)]
       (case command
         "coords"  (apply-cmd #(=  argc 1)     command c-coords  args)
