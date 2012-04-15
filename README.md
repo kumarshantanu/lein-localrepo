@@ -3,7 +3,20 @@
 Leiningen plugin to work with local Maven repository.
 
 
-## Usage
+## Installation
+
+### Lein 2 users
+
+The recommended way is to install as a global plugin in `~/.lein/profiles.clj`:
+
+    {:user {:plugins [[lein-localrepo "0.4.0"]]}}
+
+You may also install as a project plugin in `project.clj`:
+
+    :plugins [[lein-localrepo "0.4.0"]]
+
+
+### Lein 1.x users
 
 Either install as a plugin:
 
@@ -13,6 +26,8 @@ Or, include as a dev-dependency:
 
     :dev-dependencies [lein-localrepo "0.3"]
 
+
+## Usage
 
 ### Guess Leiningen (Maven) coordinates of a file
 
