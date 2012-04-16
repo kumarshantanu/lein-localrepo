@@ -85,6 +85,6 @@ On Leiningen mailing list: [http://groups.google.com/group/leiningen](http://gro
 
 ## License
 
-Copyright (C) 2011 Shantanu Kumar
+Copyright (C) 2011-2012 Shantanu Kumar
 
 Distributed under the Eclipse Public License, the same as Clojure.
