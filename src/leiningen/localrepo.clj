@@ -13,8 +13,12 @@
     (java.util.jar JarFile)))
 
 
-(def local-repo-path (str/join File/separator [(System/getProperty "user.home")
-                                               ".m2" "repository"]))
+(def local-repo-path (str/join File/separator
+                                        ; check first for the maven-related repository path
+                                        ; if such path is not specified use user.home by default
+                                        [(or (System/getProperty "maven.repo")
+                                             (System/getProperty "user.home"))
+                                                        ".m2" "repository"]))
 
 
 (defn split-artifactid
