@@ -67,7 +67,8 @@
 (defn c-install
   [filename artifact-id version]
   (aether/install :coordinates [(symbol artifact-id) version]
-                  :jar-file (jio/file filename))
+                  :jar-file (jio/file filename)
+                  :pom-file (jio/file (.replaceAll filename "\\.jar$" ".pom")))
   0)
 
 
