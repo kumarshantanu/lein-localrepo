@@ -65,9 +65,14 @@
 
 
 (defn c-install
+  "Installs the specified to local repository. Additionally, if the
+  .pom file exists alongside the .jar file, it will also be added to
+  the local repository."
   [filename artifact-id version]
   (aether/install :coordinates [(symbol artifact-id) version]
-                  :jar-file (jio/file filename))
+                  :jar-file (jio/file filename)
+                  :pom-file (let [f (jio/file (.replaceAll filename "(?i:\\.jar$)" ".pom"))]
+                              (when (.isFile f) f)))
   0)
 
 
