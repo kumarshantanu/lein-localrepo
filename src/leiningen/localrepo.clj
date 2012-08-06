@@ -71,7 +71,7 @@
   [filename artifact-id version]
   (aether/install :coordinates [(symbol artifact-id) version]
                   :jar-file (jio/file filename)
-                  :pom-file (let [f (jio/file (.replaceAll filename "\\.jar$" ".pom"))]
+                  :pom-file (let [f (jio/file (.replaceAll filename "(?i:\\.jar$)" ".pom"))]
                               (when (.isFile f) f)))
   0)
 
