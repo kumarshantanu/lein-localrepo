@@ -1,5 +1,6 @@
 (ns leiningen.localrepo
   (:require
+    [leiningen.core.main  :as main]
     [cemerick.pomegranate.aether :as aether]
     [clojure.java.io      :as jio]
     [clojure.string       :as str]
@@ -68,7 +69,7 @@
   [filename artifact-id version]
   (aether/install :coordinates [(symbol artifact-id) version]
                   :jar-file (jio/file filename))
-  0)
+  (main/exit 0))
 
 
 (defn read-artifact-description
