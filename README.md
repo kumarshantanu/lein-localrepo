@@ -9,11 +9,11 @@ Leiningen plugin to work with local Maven repository.
 
 The recommended way is to install as a global plugin in `~/.lein/profiles.clj`:
 
-    {:user {:plugins [[lein-localrepo "0.4.1"]]}}
+    {:user {:plugins [[lein-localrepo "0.5.0"]]}}
 
 You may also install as a project plugin in `project.clj`:
 
-    :plugins [[lein-localrepo "0.4.1"]]
+    :plugins [[lein-localrepo "0.5.0"]]
 
 
 ### Lein 1.x users
@@ -44,7 +44,9 @@ Output:
 
 ### Install artifacts to local Maven repository
 
-    $ lein localrepo install <filename> <[groupId/]artifactId> <version>
+    $ lein localrepo install [-r repo-path] [-p pom-file] <filename> <[groupId/]artifactId> <version>
+
+If no POM file is specified, a minimal POM will be automatically generated.
 
 Examples:
 
@@ -55,7 +57,7 @@ Examples:
 
 ### List artifacts in local Maven repository:
 
-    $ lein localrepo list [-s | -f | -d]
+    $ lein localrepo list [-r repo-path] [-s | -f | -d]
 
 Examples:
 
@@ -85,6 +87,6 @@ On Leiningen mailing list: [http://groups.google.com/group/leiningen](http://gro
 
 ## License
 
-Copyright (C) 2011-2012 Shantanu Kumar
+Copyright (C) 2011-2013 Shantanu Kumar
 
 Distributed under the Eclipse Public License, the same as Clojure.
