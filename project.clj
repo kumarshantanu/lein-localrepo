@@ -1,4 +1,4 @@
-(defproject lein-localrepo "0.5.0-SNAPSHOT"
+(defproject lein-localrepo "0.5.0"
   :description "Leiningen local repository plugin"
   :url "https://github.com/kumarshantanu/lein-localrepo"
   :license {:name "Eclipse Public License"
