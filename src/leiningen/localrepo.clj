@@ -5,6 +5,8 @@
     [clojure.java.io      :as jio]
     [clojure.string       :as str]
     [clojure.pprint       :as ppr]
+    [clojure.set          :as set]
+    [clojure.tools.cli    :as cli]
     [clojure.xml          :as xml]
     [leiningen.localrepo.internal :as in])
   (:import
@@ -16,6 +18,13 @@
 
 (def local-repo-path (str/join File/separator [(System/getProperty "user.home")
                                                ".m2" "repository"]))
+
+
+(defn assert-dir
+  [^String dir]
+  (if (in/dir? (jio/file dir))
+    dir
+    (main/abort (format "ERROR: '%s' is not a directory" dir))))
 
 
 (defn split-artifactid
@@ -60,16 +69,31 @@
 (def doc-install
   "Install artifact to local repository
   Arguments:
-    <filename> <artifact-id> <version>
+    [options] <filename> <artifact-id> <version>
+  Options:
+    -r | --repo repo-path
   Example:
     foo-1.0.jar bar/foo 1.0")
 
 
-(defn c-install
-  [filename artifact-id version]
-  (aether/install :coordinates [(symbol artifact-id) version]
+(defn c-install*
+  [repo-path filename artifact-id version]
+  (aether/install :local-repo (assert-dir repo-path)
+                  :coordinates [(symbol artifact-id) version]
                   :jar-file (jio/file filename))
   (main/exit 0))
+
+
+(defn c-install
+  [& args]
+  (let [[options args banner] (cli/cli args
+                                       ["-r" "--repo" "Local repo path" :default local-repo-path])
+        help-abort (fn []
+                     (println doc-install)
+                     (main/abort))]
+    (cond
+     (not= 3 (count args)) (help-abort)
+     :otherwise (apply c-install* (:repo options) args))))
 
 
 (defn read-artifact-description
@@ -139,23 +163,23 @@
 (def doc-list
   "List artifacts in local Maven repo
   Arguments:
-    [-d | -f | -s]
-  No arguments lists with concise information
-  -d lists in detail
-  -f lists with filenames of artifacts
-  -s lists with project description")
+    [-r | --repo repo-path] [-d | -f | -s]
+  Options:
+    -r | --repo repo-path => specifies the path of the local Maven repository
+    No arguments lists with concise information
+    -d lists in detail
+    -f lists with filenames of artifacts
+    -s lists with project description")
 
 
-(defn c-list
+(defn c-list*
   "List artifacts in local Maven repo"
-  [& args]
+  [repo-path listing-type]
   (let [artifact-entries (sort (read-artifact-entries
-                                (jio/file local-repo-path)))
+                                (jio/file (assert-dir repo-path))))
         artifact-str  (fn artstr
                         ([gi ai] (if (= gi ai) ai (str gi "/" ai)))
                         ([[gi ai & more]] (artstr gi ai)))
-        flag          (or (first args) :nil)
-        invalid-flag? (not (contains? #{:nil "-s" "-f" "-d"} flag))
         each-artifact (fn [f] ; args to f: 1. art-name, 2. artifacts
                         (let [by-art-id (group-by artifact-str
                                                   artifact-entries)]
@@ -177,49 +201,78 @@
                                       n (concat (repeat n \space)
                                                 s))))))]
     (cond
-     invalid-flag? (println "Invalid argument(s):" (str/join " " args)
-                            " ==>  Allowed: [-s | -f | -d]")
-     (= :nil flag) (each-artifact
-                    (fn [art-name artifacts]
-                      (println
-                       (format "%s (%s)" art-name
-                               (str/join ", "
-                                         (distinct (for [[g a v f p] artifacts]
-                                                     v)))))))
-     (= "-s" flag) (each-artifact
-                    (fn [art-name artifacts]
-                      (println
-                       (format "%s (%s) -- %s" (ljustify art-name 20)
-                               (str/join ", "
-                                         (distinct (for [[g a v f p] artifacts]
-                                                     v)))
-                               (or (some #(read-artifact-description
-                                           (last %)) artifacts)
-                                   "")))))
-     (= "-f" flag) (each-artifact
-                    (fn [art-name artifacts]
-                      (doseq [each artifacts]
-                        (let [[g a v ^File f] each
-                              an (ljustify (format "[%s \"%s\"]"
-                                                   art-name v) 30)
-                              nm (ljustify (.getName f) 30)
-                              sp (ljustify (format "%s %s" an nm) 62)
-                              ln (rjustify (.length f)
-                                           (min (- 70 (count sp)) 10))]
-                          (println
-                           (format "%s %s %s" sp ln
-                                   (date-format
-                                    (Date. (.lastModified f)))))))))
-     (= "-d" flag) (each-artifact
-                    (fn [art-name artifacts]
-                      (println
-                       (format "%s (%s)\n%s" (ljustify art-name 20)
-                               (str/join ", "
-                                         (distinct (for [[g a v f p] artifacts]
-                                                     v)))
-                               (or (some #(read-artifact-details
-                                           (last %)) artifacts)
-                                   ""))))))))
+     (nil? listing-type)
+     (each-artifact
+      (fn [art-name artifacts]
+        (println
+         (format "%s (%s)" art-name
+                 (str/join ", "
+                           (distinct (for [[g a v f p] artifacts]
+                                       v)))))))
+     (= :description listing-type)
+     (each-artifact
+      (fn [art-name artifacts]
+        (println
+         (format "%s (%s) -- %s" (ljustify art-name 20)
+                 (str/join ", "
+                           (distinct (for [[g a v f p] artifacts]
+                                       v)))
+                 (or (some #(read-artifact-description
+                             (last %)) artifacts)
+                     "")))))
+     (= :filename listing-type)
+     (each-artifact
+      (fn [art-name artifacts]
+        (doseq [each artifacts]
+          (let [[g a v ^File f] each
+                an (ljustify (format "[%s \"%s\"]"
+                                     art-name v) 30)
+                nm (ljustify (.getName f) 30)
+                sp (ljustify (format "%s %s" an nm) 62)
+                ln (rjustify (.length f)
+                             (min (- 70 (count sp)) 10))]
+            (println
+             (format "%s %s %s" sp ln
+                     (date-format
+                      (Date. (.lastModified f)))))))))
+     (= :detail listing-type)
+     (each-artifact
+      (fn [art-name artifacts]
+        (println
+         (format "%s (%s)\n%s" (ljustify art-name 20)
+                 (str/join ", "
+                           (distinct (for [[g a v f p] artifacts]
+                                       v)))
+                 (or (some #(read-artifact-details
+                             (last %)) artifacts)
+                     "")))))
+     :otherwise
+     (throw (RuntimeException.
+             (str "Expected valid listing type, found " listing-type))))))
+
+
+(defn c-list
+  [& args]
+  (let [[options args banner] (cli/cli args
+                                       ["-r" "--repo" "Local repo path" :default local-repo-path]
+                                       ["-d" "--detail" "List in detail" :flag true]
+                                       ["-f" "--filename" "List with filenames" :flag true]
+                                       ["-s" "--description" "List with description" :flag true])
+        list-types #{:detail :filename :description}
+        help-abort (fn []
+                     (println doc-list)
+                     (println "Only either of -d, -f, -s may be selected")
+                     (main/abort))]
+    (cond
+     (seq args) (do (println "Invalid arguments" args) (help-abort))
+     (->> (keys options)
+          (filter options)
+          set
+          (set/intersection list-types)
+          rest
+          seq) (help-abort)
+     :otherwise (c-list* (:repo options)
+                         (some #(and (options %) %) list-types)))))
 
 
 (def doc-remove
@@ -277,11 +330,10 @@ $ lein localrepo help install
   ([_ command & args]
     (let [argc (count args)]
       (case command
-        "coords"  (apply-cmd #(=  argc 1)     command c-coords  args)
-        "install" (apply-cmd #(=  argc 3)     command c-install args)
-        "list"    (apply-cmd #(or (= argc 0)
-                                  (= argc 1)) command c-list    args)
-        "remove"  (apply-cmd #(>= argc 0)     command c-remove  args)
+        "coords"  (apply-cmd #(= argc 1)        command c-coords  args)
+        "install" (apply-cmd #(#{3 5} argc)     command c-install args)
+        "list"    (apply-cmd #(#{0 1 2 3} argc) command c-list    args)
+        "remove"  (apply-cmd #(>= argc 0)       command c-remove  args)
         "help"    (apply-cmd #(or (= argc 0)
-                                  (= argc 1)) command c-help    args)
+                                  (= argc 1))   command c-help    args)
         (c-help)))))
