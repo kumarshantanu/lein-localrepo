@@ -1,7 +1,12 @@
 # Changes and TODO
 
 
-## 0.5.1 / 2-13-June-29
+## 0.5.2 / 2013-July-07
+
+* Report error if user tries to install non-existent file
+
+
+## 0.5.1 / 2013-June-29
 
 * Omit description and URL from default POM file
 
