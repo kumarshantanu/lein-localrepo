@@ -27,6 +27,13 @@
     (main/abort (format "ERROR: '%s' is not a directory" dir))))
 
 
+(defn assert-file
+  [^String file]
+  (if (in/file? (jio/file file))
+    file
+    (main/abort (format "ERROR: '%s' is not a file" file))))
+
+
 (defn split-artifactid
   "Given 'groupIp/artifactId' string split them up and return
   as a vector of 2 elements."
@@ -103,8 +110,8 @@
   [repo-path pom-filename filename artifact-id version]
   (aether/install :local-repo (assert-dir repo-path)
                   :coordinates [(symbol artifact-id) version]
-                  :jar-file (jio/file filename)
-                  :pom-file pom-filename)
+                  :jar-file (jio/file (assert-file filename))
+                  :pom-file (assert-file pom-filename))
   (main/exit 0))
 
 

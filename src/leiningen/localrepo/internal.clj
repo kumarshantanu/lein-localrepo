@@ -97,6 +97,13 @@
        (.isDirectory d)))
 
 
+(defn file?
+  "Return true if `f` is a file, false otherwise."
+  [f]
+  (and (instance? File f)
+       (.isFile f)))
+
+
 (defn dir-or-file
   "Return :dir if `f` (java.io.File) is a directory, :file otherwise."
   [f]
