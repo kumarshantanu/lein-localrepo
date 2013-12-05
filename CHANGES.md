@@ -1,6 +1,10 @@
 # Changes and TODO
 
 
+## 0.5.3 / 2013-December-05
+
+* Report current directory too if specified file/dir is not found
+
 ## 0.5.2 / 2013-July-07
 
 * Report error if user tries to install non-existent file
