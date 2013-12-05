@@ -20,18 +20,22 @@
                                                ".m2" "repository"]))
 
 
+(defn pwd []
+  (.getParent (.getAbsoluteFile (File. "."))))
+
+
 (defn assert-dir
   [^String dir]
   (if (in/dir? (jio/file dir))
     dir
-    (main/abort (format "ERROR: '%s' is not a directory" dir))))
+    (main/abort (format "ERROR: '%s' is not a directory, current directory is: %s" dir (pwd)))))
 
 
 (defn assert-file
   [^String file]
   (if (in/file? (jio/file file))
     file
-    (main/abort (format "ERROR: '%s' is not a file" file))))
+    (main/abort (format "ERROR: '%s' is not a file, current directory is: %s" file (pwd)))))
 
 
 (defn split-artifactid
@@ -54,8 +58,8 @@
   "Guess Leiningen coordinates of given filename.
   Arguments:
     <filepath>
-  Example:                                                                      
-    Input  -  local/jars/foo-bar-1.0.6.jar                                        
+  Example:
+    Input  -  local/jars/foo-bar-1.0.6.jar
     Output - foo-bar-1.0.6.jar foo-bar 1.0.6")
 
 
