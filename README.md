@@ -7,7 +7,8 @@ Leiningen plugin to work with local Maven repository.
 
 ### Lein 2 users
 
-The recommended way is to install as a global plugin in `~/.lein/profiles.clj`:
+The recommended way is to install as a global plugin in `~/.lein/profiles.clj`
+(for Windows users `%USERPROFILE%\.lein\profiles.clj`):
 
     {:user {:plugins [[lein-localrepo "0.5.3"]]}}
 
