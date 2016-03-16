@@ -78,6 +78,11 @@ Examples:
     $ lein localrepo remove foomatic               # removes all versions
     $ lein localrepo remove com.example/foo 1.0.3  # removes only specified version
 
+Note:
+As an alternative while this feature is being implemented, removing artifacts is composed of two steps:
+First, find the path to the artifact with `lein classpath | tr ":" "\n" | grep m2.*<YOUR ARTIFACT ID HERE>`.
+Second, delete the directory of that artifact from the group ID or the root of that artifact.
+
 
 ## Getting in touch
 
