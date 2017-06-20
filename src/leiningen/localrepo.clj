@@ -76,7 +76,7 @@
         [_ artifact-id version] tokens]
     (if (and artifact-id version)
       (println filepath (str artifact-id "/" artifact-id) version)
-      (main/abort "ERROR: Cannot determine artifact-id and version"))))
+      (main/abort "ERROR: Cannot determine artifact-ID and version"))))
 
 
 (def doc-install
