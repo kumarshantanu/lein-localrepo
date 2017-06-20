@@ -1,9 +1,16 @@
 # Changes and TODO
 
 
+## [WIP] 0.5.4 / 2017-June-??
+
+* [TODO] Fix #11 - `lein help localrepo` should list complete help text
+* [TODO] Upgrade dependency `clojure/tools.cli` version to `0.3.5`
+
+
 ## 0.5.3 / 2013-December-05
 
 * Report current directory too if specified file/dir is not found
+
 
 ## 0.5.2 / 2013-July-07
 
@@ -19,4 +26,3 @@
 
 * Allow user to override default local repo path
 * Let user specify a POM file during install (auto-generate if unspecified)
-
