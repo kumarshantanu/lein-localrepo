@@ -10,11 +10,11 @@ Leiningen plugin to work with local Maven repository.
 The recommended way is to install as a global plugin in `~/.lein/profiles.clj`
 (for Windows users `%USERPROFILE%\.lein\profiles.clj`):
 
-    {:user {:plugins [[lein-localrepo "0.5.3"]]}}
+    {:user {:plugins [[lein-localrepo "0.5.4"]]}}
 
 You may also install as a project plugin in `project.clj`:
 
-    :plugins [[lein-localrepo "0.5.3"]]
+    :plugins [[lein-localrepo "0.5.4"]]
 
 
 ### Lein 1.x users
@@ -93,6 +93,6 @@ On Leiningen mailing list: [http://groups.google.com/group/leiningen](http://gro
 
 ## License
 
-Copyright (C) 2011-2013 Shantanu Kumar
+Copyright (C) 2011-2017 Shantanu Kumar
 
 Distributed under the Eclipse Public License, the same as Clojure.
