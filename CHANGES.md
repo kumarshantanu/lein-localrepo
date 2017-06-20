@@ -5,6 +5,7 @@
 
 * Fix #11 - `lein help localrepo` now lists complete help text
 * Upgrade dependency `clojure/tools.cli` version to `0.3.5`
+* Exit with error message and non-zero exit code when `coords` command cannot determine artifact-ID and version
 
 
 ## 0.5.3 / 2013-December-05
