@@ -4,7 +4,7 @@
 ## [WIP] 0.5.4 / 2017-June-??
 
 * Fix #11 - `lein help localrepo` now lists complete help text
-* [TODO] Upgrade dependency `clojure/tools.cli` version to `0.3.5`
+* Upgrade dependency `clojure/tools.cli` version to `0.3.5`
 
 
 ## 0.5.3 / 2013-December-05
