@@ -369,7 +369,19 @@ $ lein localrepo help install
 
 
 (defn ^:no-project-needed localrepo
-  "Work with local Maven repository"
+  "Work with local Maven repository
+
+  Usage: lein localrepo <command> (commands are listed below)
+
+  coords   Guess Leiningen (Maven) coords of a file
+  install  Install artifact to local repository
+  list     List artifacts in local repository
+  remove   Remove artifact from local repository (Not Yet Implemented)
+  help     This help screen
+
+  For help on individual commands use 'help' with command name, e.g.:
+
+  $ lein localrepo help install"
   ([_]
     (c-help))
   ([_ command & args]
